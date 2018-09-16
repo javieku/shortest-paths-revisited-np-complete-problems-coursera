@@ -28,6 +28,10 @@ class Node
     @predecessors << predecessor
   end
 
+  def remove_predecessort(name)
+    @predecessors -= [name]
+  end
+
   def add_edge(successor)
     @successors << successor
   end
@@ -52,6 +56,16 @@ class Node
     @successors.select {|s| s.dst == name}
   end
 
+  def select_candidates(explored)
+    return @successors.select {|item|
+                !explored.include?(item.successor_name)
+           }
+  end
+
+  def sample
+    @successors.sample(1).first
+  end
+
   def to_s
     "#{@name.to_s} -> [#{@successors.join(' ')}]"
   end
@@ -59,9 +73,11 @@ end
   
 class Graph
   attr_reader :nodes
+  attr_reader :edges
   
   def initialize
     @nodes = {}
+    @edges = []
   end
 
   def add_node(node)
@@ -73,7 +89,11 @@ class Graph
   end
 
   def edge(name,other_name)
-      @nodes[name].select(other_name)
+    @nodes[name].select(other_name)
+  end
+  
+  def edges(name,other_name)
+    @edges
   end
   
   def successors(name)
@@ -91,6 +111,13 @@ class Graph
   def add_edge(edge)
     @nodes[edge.src].add_edge(edge)
     @nodes[edge.dst].add_predecessor(edge)
+    @edges.push(edge)
+  end
+
+  def remove_edge(edge)
+    @nodes[edge.src].remove_edge(edge)
+    @nodes[edge.dst].remove_predecessor(edge)
+    @edges.remove(edge)
   end
 
   def [](name)
