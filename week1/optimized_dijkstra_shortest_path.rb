@@ -20,31 +20,34 @@ class DijktraAlgorithm
 
   def execute graph, initial_node
 
-    minheap = Heap.new { |x, y| (x.weight <=> y.weight) == -1 }
-    
+    start = Time.now
+
+    minheap = Heap.new { |x, y|
+       x_aux = x.split(".")[1]   
+       y_aux = y.split(".")[1]
+      (x_aux.to_f <=> y_aux.to_f) == -1 }
+    precussors = {}
+
     graph.nodes.each do |node|
       @shortest_path[node.first] = 0.0
       edge = graph.edge(initial_node,node.first);
-      minheap.push(ExtendedNode.new(node.first,edge.weight)) if node.first != initial_node && edge != nil
+      if (edge) 
+        heap_value = ExtendedNode.new(node.first,edge.weight)
+        precussors[node.first] = initial_node.to_s+"#"+edge.weight.to_s
+        minheap.push(initial_node.to_s+"#"+edge.weight.to_s, heap_value) if node.first != initial_node && edge != nil
+      end
     end
+
+    puts "Dijkstra's initialization done  " +  (Time.now - start).to_s
     
     explored = Set[initial_node]
     while(explored.length != graph.nodes.size)
-      
-      ext = minheap.pop
-      
-      while (ext && explored.include?(ext.node))
-        puts(ext.node)
-        puts(ext.weight)
-        puts(minheap.next.node)
-        puts(minheap.next_key.node)
-        puts(minheap.empty?)
-        puts "JAVI! " + minheap.size.to_s
-        minheap.delete(ext.node)
-        ext = minheap.pop
-      end
-    
-      if (!ext)
+      puts "Dijkstra's extract-min starting " +  (Time.now - start).to_s
+
+      best = minheap.pop
+      puts "Dijkstra's extract-min done " + best.node.to_s + " " +  (Time.now - start).to_s
+
+      if (!best)
         unreachable_nodes = (explored.to_a - graph.nodes.keys) | (graph.nodes.keys - explored.to_a)
         for v in unreachable_nodes
           @shortest_path[v] = FIXNUM_MAX
@@ -52,20 +55,30 @@ class DijktraAlgorithm
         break;
       end
 
-      @shortest_path[ext.node] = ext.weight
-      explored.add(ext.node)
+      @shortest_path[best.node] = best.weight
+      explored.add(best.node)
 
-      graph.successors(ext.node).each do |node|
+      puts "Dijkstra's for done " + best.node.to_s + " " +  (Time.now - start).to_s
+
+      graph.successors(best.node).each do |node|
 
         if(explored.include?(node.first))
           next
         end
-        if(node.first == 599)
-          puts "JAVI! " + minheap.size.to_s
+
+        current_precussor = precussors[node.first]
+
+        edge = graph.edge(best.node,node.first);
+        heap_value = ExtendedNode.new(node.first, best.weight + edge.weight)
+        precussors[node.first] = node.first.to_s+"#"+(best.weight + edge.weight).to_s
+        if(current_precussor && current_precussor.split("#")[1].to_f > best.weight + edge.weight)
+          minheap.delete( current_precussor)
         end
-        edge = graph.edge(ext.node,node.first);
-        minheap.push(ExtendedNode.new(node.first, ext.weight + edge.weight))
+        minheap.push(node.first.to_s+"#"+(best.weight + edge.weight).to_s, heap_value)
       end
+
+      puts "Dijkstra's update heap done " + best.node.to_s + " "+  (Time.now - start).to_s
+
     end
   end
 

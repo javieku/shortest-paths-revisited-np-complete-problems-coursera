@@ -2,7 +2,7 @@
 class Edge
   attr_reader :src
   attr_reader :dst
-  attr_reader :weight
+  attr_accessor :weight
   def initialize(src,dst,weight)
     @src = src
     @dst = dst
@@ -20,7 +20,7 @@ class Node
 
   def initialize(name)
     @name = name
-    @successors = []
+    @successors = {}
     @predecessors = []
   end
 
@@ -28,46 +28,42 @@ class Node
     @predecessors << predecessor
   end
 
-  def remove_predecessort(name)
+  def remove_predecessor(name)
     @predecessors -= [name]
   end
 
   def add_edge(successor)
-    @successors << successor
+    @successors[successor.dst] = successor 
   end
 
   def remove_edge(name)
-    @successors -= [name]
+    @successors.delete(name)
   end
 
   def n_of_edges
     @successors.length
   end
 
-  def [](position)
-    @successors[position]
-  end
-
   def include?(name)
-    @successors.any? {|x| x.dst == name }
+    @successors.include?(name)
   end
   
   def select(name)
-    @successors.select {|s| s.dst == name}
+    @successors[name]
   end
 
   def select_candidates(explored)
-    return @successors.select {|item|
-                !explored.include?(item.successor_name)
+    return @successors.values.select {|item|
+                !explored.include?(item.dst)
            }
   end
 
   def sample
-    @successors.sample(1).first
+    @successors.to_a.sample(1).first
   end
 
   def to_s
-    "#{@name.to_s} -> [#{@successors.join(' ')}]"
+    "#{@name.to_s} -> [#{@successors.to_s}]"
   end
 end
   
@@ -92,10 +88,6 @@ class Graph
     @nodes[name].select(other_name)
   end
   
-  def edges(name,other_name)
-    @edges
-  end
-  
   def successors(name)
     @nodes[name].successors
   end
@@ -104,8 +96,8 @@ class Graph
     @nodes[name].predecessors
   end
 
-  def remove_node(contains)
-      @nodes.delete(node_name)
+  def remove_node(name)
+      @nodes.delete(name)
   end
 
   def add_edge(edge)
@@ -114,10 +106,20 @@ class Graph
     @edges.push(edge)
   end
 
-  def remove_edge(edge)
-    @nodes[edge.src].remove_edge(edge)
-    @nodes[edge.dst].remove_predecessor(edge)
-    @edges.remove(edge)
+  def remove_edges(node_name)
+    for edge in @edges
+      if (edge.src  == node_name || edge.dst == node_name)
+        @nodes[edge.src].remove_edge(edge) if @nodes.include?(edge.src)
+        @nodes[edge.dst].remove_predecessor(edge) if @nodes.include?(edge.dst)
+      end
+    end 
+    @edges.delete_if{|e| e.src  == node_name || e.dst == node_name } 
+  end
+
+  def reweight_edges(weights)
+    for edge in edges
+        edge.weight = edge.weight + weights[edge.src] - weights[edge.dst]
+    end 
   end
 
   def [](name)
