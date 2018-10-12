@@ -11,6 +11,8 @@ class BellmanFordAlgorithm
   end
 
   def execute graph, initial_vertex
+    
+    start = Time.now
     n = graph.size;
     result = Array.new(n);
     for i in (0..n)
@@ -24,10 +26,12 @@ class BellmanFordAlgorithm
             result[0][v] = FIXNUM_MAX
         end   
     end
+     
+    puts "Table initialization done " +  (Time.now - start).to_s
 
     for i in (1..n-1)
         for v in (1..n)
-            edge = graph.predecessors(v).min_by { |pred| pred.weight }
+            edge = graph.predecessors(v).min_by { |pred| result[i-1][pred.src]+pred.weight }
             if(edge == nil)
                 result[i][v] = result[i-1][v] 
             else
@@ -36,14 +40,19 @@ class BellmanFordAlgorithm
         end
     end
 
+    puts "Core algorithm done " +  (Time.now - start).to_s
+
+
     for v in (1..n)
-        edge = graph.predecessors(v).min_by { |pred| pred.weight }
+        edge = graph.predecessors(v).min_by { |pred| result[n-1][pred.src]+pred.weight }
         if(edge == nil)
             result[n][v] = result[n-1][v] 
         else
             result[n][v] = [result[n-1][v], result[n-1][edge.src] + edge.weight].min 
         end
     end
+
+    puts "Cycle detection done " +  (Time.now - start).to_s
     
     @has_negative_cycle = result[n] != result[n-1];
     @shortest_path = result[n-1];
@@ -52,7 +61,7 @@ end
 
 def main
   start = Time.now
-  graph = GraphLoader.instance.read_graph "g_bellman_ford.txt"
+  graph = GraphLoader.instance.read_graph "g3.txt"
   puts "Graph loaded in memory " +  (Time.now - start).to_s
   start = Time.now
   puts "Starting Bellman-Ford's algorithm"
@@ -63,5 +72,3 @@ def main
   puts "Bellman-Ford's result -> " +  algorithm.shortest_path.to_s
   puts "Graph has negative cycles -> " +  algorithm.has_negative_cycle.to_s
 end
-
-main

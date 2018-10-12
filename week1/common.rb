@@ -14,7 +14,7 @@ class Path
     end
     def to_s
         "(" + @src.to_s + " -> " + @dst.to_s + " : " + cost.to_s + ")"
-      end
+    end
 end
 
 class GraphLoader
