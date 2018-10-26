@@ -12,31 +12,37 @@ class TravellingSalesmanAlgorithm
       start = Time.now
 
       cities = []
-      for m in (1...n)
-        cities.push(m)
-      end
+      (1..n).each { |city|
+        cities.push(city)
+      }
+
       s = cities.combination(1).to_a
 
       initial_array = []
-      for i in (0...n)
-        initial_array[i] = FIXNUM_MAX
+      for city in (1..n)
+        initial_array[city] = FIXNUM_MAX
       end
 
       a = {}
       for k in (0...s.size())
         a[s[k]] = initial_array.dup
+        for city in (1..n)
+            a[s[k]][city] = FIXNUM_MAX
+          end
         if(s[k] == [1])
-          a[s[k]][1] = 1
-        else
-          a[s[k]][k] = FIXNUM_MAX
+          a[s[k]][1] = 0
         end
       end
 
-      result = Array.new(n);
       for m in (2..n)
         all_s = cities.combination(m).to_a
         for i in (0...all_s.size()) 
             s = all_s[i]
+
+            if (!s.include?(1))
+                next
+            end
+
             for j in (0...s.size())
                 if (s[j] == 1)
                     next
@@ -48,18 +54,17 @@ class TravellingSalesmanAlgorithm
                     end
                     aux = s.dup
                     aux.delete(s[j])
-                    c = euclidean_distance(city_distances[s[k]],city_distances[s[j]])
-
+                    c = euclidean_distance(city_distances[s[k]-1],city_distances[s[j]-1])
                     minimum = [a[aux][s[k]] + c, minimum].min if a.has_key?(aux) 
                 end
                 a[s] = initial_array.dup unless a.has_key?(s) 
-                a[s][j] = minimum
+                a[s][s[j]] = minimum
             end
         end 
       end
       @minimum_cost = FIXNUM_MAX
       for j in (2..n)
-        c = euclidean_distance(city_distances[1],city_distances[j])
+        c = euclidean_distance(city_distances[1-1],city_distances[j-1])
         @minimum_cost = [a[cities][j] + c, @minimum_cost].min
       end
     end
@@ -108,13 +113,13 @@ end
 
 def main
     start = Time.now
-    cities = InputLoader.instance.read_cities "tsp.txt"
+    city_distances = InputLoader.instance.read_cities "tsp.txt"
     puts "Graph loaded in memory " +  (Time.now - start).to_s
     start = Time.now
     algorithm = TravellingSalesmanAlgorithm.new
-    algorithm.execute(cities) 
+    algorithm.execute(city_distances) 
     puts "Travelling Salesman Algorithm executed " +  (Time.now - start).to_s
-    puts "Minimun cost of a cycle around all the cities is " +  algorithm.minimum_cost
+    puts "Minimun cost of a cycle around all the cities is " +  algorithm.minimum_cost.to_s
 end
 
 main
